@@ -140,6 +140,7 @@ include(find_ubsan)
 include(find_stack_protector_strong)
 
 
+include(maidsafe_find_clang_format)
 include(maidsafe_find_just_thread)
 include(maidsafe_find_python)
 include(maidsafe_find_git)

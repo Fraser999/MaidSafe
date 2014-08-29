@@ -252,6 +252,20 @@ function(ms_target_include_system_dirs Target)
 endfunction()
 
 
+function(ms_add_clang_format)
+  if(NOT ClangFormatExe)
+    return()
+  endif()
+  file(GLOB_RECURSE AllFiles *.cc *.h *.proto)
+  file(GLOB_RECURSE ExcludeFiles *qt_push_headers.h *qt_pop_headers.h)
+  if(ExcludeFiles)
+    list(REMOVE_ITEM AllFiles ${ExcludeFiles})
+  endif()
+  add_custom_target(Format${CamelCaseProjectName} COMMAND ${ClangFormatExe} -i ${AllFiles})
+  set_target_properties(Format${CamelCaseProjectName} PROPERTIES FOLDER "MaidSafe/Format")
+endfunction()
+
+
 function(ms_add_style_test)
   if(NOT MaidsafeTesting)
     return()

@@ -33,10 +33,10 @@ if(NOT PROJECT_NAME STREQUAL Cryptopp AND NOT PROJECT_NAME STREQUAL sqlite AND N
   set(Msg "Configuring MaidSafe ${CamelCaseProjectName} project on ${Branch} branch")
   string(REGEX REPLACE . "-" Underscore ${Msg})
   message("${HR}\n${Msg}\n${Underscore}")
+  ms_add_clang_format()
 endif()
 
 set(CMAKE_MODULE_PATH ${maidsafe_SOURCE_DIR}/cmake_modules)
-
 
 set(MAIDSAFE_TEST_TYPE_MESSAGE "GTests included: All.  ")
 if(NOT MAIDSAFE_TEST_TYPE)
