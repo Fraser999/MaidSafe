@@ -21,11 +21,7 @@
 #==================================================================================================#
 
 
-if(APPLE)
-  cmake_minimum_required(VERSION 2.8.12.2 FATAL_ERROR)
-else()
-  cmake_minimum_required(VERSION 2.8.12.1 FATAL_ERROR)
-endif()
+cmake_minimum_required(VERSION 2.8.12.2 FATAL_ERROR)
 
 if("${CMAKE_BINARY_DIR}" STREQUAL "${CMAKE_SOURCE_DIR}")
   set(Msg "\n\nThis project doesn't allow \"in-source builds\".\nYou must run CMake from a folder outside")
@@ -58,7 +54,6 @@ else()
   endif()
 endif()
 
-
 include(CTest)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON) # works for Unix MakeFiles (also ninja)
 set(BUILD_SHARED_LIBS OFF)
@@ -67,7 +62,7 @@ set(CMAKE_ERROR_ON_ABSOLUTE_INSTALL_DESTINATION ON)
 set(EXPORT_COMPILE_COMMANDS ON)
 set(HR "================================================================================")
 
-
+set(MaidsafeGeneratedSourcesDir ${CMAKE_BINARY_DIR}/GeneratedSources)
 set(SubModules
       common
       passport
@@ -144,7 +139,6 @@ include(maidsafe_find_clang_format)
 include(maidsafe_find_just_thread)
 include(maidsafe_find_python)
 include(maidsafe_find_git)
-include(maidsafe_find_openmp)
 
 
 if(APPLE)
@@ -166,8 +160,12 @@ option(USE_JUST_THREADS "If ON, try to find and use the just::thread library (Wi
 include(standard_flags)
 
 
-# Prepare CTestCustom.cmake
 if(MaidsafeTesting)
+  # 'SkipReturnCodeValue' is used as the exit code when running disabled GTests.
+  # It must be between 0 and 255 inclusive.  (Bash returns 127 if a command is not found).
+  set(SkipReturnCodeValue 127)
+
+  # Prepare CTestCustom.cmake
   set(CTestCustomFile "${CMAKE_BINARY_DIR}/CTestCustom.cmake")
   file(WRITE ${CTestCustomFile} "")
   ms_add_coverage_exclude(\\\\.pb\\\\.)
@@ -188,6 +186,9 @@ endif()
 
 # Add third party libs and each sub-module
 add_subdirectory(src/third_party_libs)
+if(${CMAKE_VERSION} VERSION_LESS 3.0)
+  include_directories("${CMAKE_SOURCE_DIR}/src/third_party_libs/header_only")
+endif()
 foreach(SubModule ${SubModules})
   add_subdirectory(src/${SubModule})
 endforeach()
@@ -233,4 +234,5 @@ if(MSVC OR XCODE)
 endif()
 
 
-include(package)
+include(add_installers)
+# include(package)

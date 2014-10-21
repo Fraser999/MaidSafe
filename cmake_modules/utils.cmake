@@ -96,6 +96,10 @@ function(ms_check_compiler)
     if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS "3.3")
       message(FATAL_ERROR "\nIn order to use C++11 features, this library cannot be built using a version of Clang less than 3.3")
     endif()
+  elseif(${CMAKE_CXX_COMPILER_ID} STREQUAL "AppleClang")
+    if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS "5.1")
+      message(FATAL_ERROR "\nIn order to use C++11 features, this library cannot be built using a version of AppleClang less than 5.1")
+    endif()
   elseif(${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
     if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS "4.8")
       message(FATAL_ERROR "\nIn order to use C++11 features, this library cannot be built using a version of GCC less than 4.8")
@@ -188,8 +192,33 @@ function(check_license_block File)
 endfunction()
 
 
+# As suggested in pull request https://github.com/maidsafe/MaidSafe/pull/140 from
+# https://github.com/smspillaz, issue a developer warning if duplicate files are added to a target.
+# While this *shouldn't* cause any significant problems, it could be a symptom of a bug in the
+# current CMakeLists.txt
+function(ms_check_for_duplicates TargetName)
+  set(Files ${ARGN})
+  list(LENGTH Files FilesLength)
+  string(LENGTH "${CMAKE_CURRENT_SOURCE_DIR}/" SourceDirLength)
+  while(FilesLength)
+    list(GET Files 0 File)
+    math(EXPR ExpectedLength ${FilesLength}-1)
+    list(REMOVE_ITEM Files ${File})
+    list(LENGTH Files FilesLength)
+    if(NOT FilesLength EQUAL ExpectedLength)
+      string(SUBSTRING "${File}" ${SourceDirLength} -1 File)
+      set(DuplicateFiles "${DuplicateFiles}\n\t${File}")
+    endif()
+  endwhile()
+  if(DuplicateFiles)
+    message(AUTHOR_WARNING "\n\nDuplicate source files found for target '${TargetName}':${DuplicateFiles}\n\n")
+  endif()
+endfunction()
+
+
 # Adds a static library with CMake Target name of "${Lib}".
 function(ms_add_static_library Lib)
+  ms_check_for_duplicates(${Lib} ${ARGN})
   foreach(File ${ARGN})
     check_license_block(${File})
   endforeach()
@@ -214,6 +243,7 @@ endfunction()
 # camel-case name of the exe.  (e.g. the exe 'test_common', will have APPLICATION_NAME=TestCommon
 # unless 'test_commonName' is set, in which case it will have APPLICATION_NAME=${test_commonName})
 function(ms_add_executable Exe FolderName)
+  ms_check_for_duplicates(${Exe} ${ARGN})
   foreach(File ${ARGN})
     check_license_block(${File})
   endforeach()
@@ -357,7 +387,7 @@ endfunction()
 
 
 function(ms_test_summary_output)
-  list(LENGTH ALL_GTESTS GtestCount)
+  list(LENGTH AllGtests GtestCount)
   message(STATUS "${MAIDSAFE_TEST_TYPE_MESSAGE}${GtestCount} Google test(s) enabled.")
 endfunction()
 
@@ -736,7 +766,8 @@ function(ms_get_target_architecture)
 
     #error cmake_ARCH unknown
     ")
-    file(WRITE "${CMAKE_BINARY_DIR}/arch.c" "${archdetect_c_code}")
+    set(TempTestFile "${CMAKE_BINARY_DIR}/arch.c")
+    file(WRITE "${TempTestFile}" "${archdetect_c_code}")
     enable_language(C)
 
     # Detect the architecture in a rather creative way...
@@ -750,9 +781,10 @@ function(ms_get_target_architecture)
     try_run(run_result_unused
             compile_result_unused
             "${CMAKE_BINARY_DIR}"
-            "${CMAKE_BINARY_DIR}/arch.c"
+            "${TempTestFile}"
             COMPILE_OUTPUT_VARIABLE ARCH
             CMAKE_FLAGS CMAKE_OSX_ARCHITECTURES=${CMAKE_OSX_ARCHITECTURES})
+    file(REMOVE "${TempTestFile}")
 
     # Parse the architecture name from the compiler output
     string(REGEX MATCH "cmake_ARCH ([a-zA-Z0-9_]+)" ARCH "${ARCH}")
@@ -763,7 +795,7 @@ function(ms_get_target_architecture)
     # If we are compiling with an unknown architecture this variable should
     # already be set to "unknown" but in the case that it's empty (i.e. due
     # to a typo in the code), then set it to unknown
-    if (NOT ARCH)
+    if(NOT ARCH)
       set(ARCH unknown)
     endif()
   endif()
@@ -896,18 +928,32 @@ function(ms_set_meta_files_custom_commands OutputFile InputFile MetaFiles Output
 endfunction()
 
 
-function(ms_get_branch BranchName)
-  execute_process(COMMAND "${Git_EXECUTABLE}" rev-parse --abbrev-ref HEAD
+macro(ms_get_branch_and_commit BranchName CommitName)
+  execute_process(COMMAND "${Git_EXECUTABLE}" rev-parse --sq --abbrev-ref HEAD
                   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
                   RESULT_VARIABLE Result
-                  OUTPUT_VARIABLE Output
+                  OUTPUT_VARIABLE ${BranchName}
+                  OUTPUT_STRIP_TRAILING_WHITESPACE)
+  if(NOT Result EQUAL 0)
+    set(${BranchName} "unknown")
+  endif()
+
+  execute_process(COMMAND "${Git_EXECUTABLE}" rev-parse --sq --short HEAD
+                  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+                  RESULT_VARIABLE Result
+                  OUTPUT_VARIABLE ${CommitName}
                   OUTPUT_STRIP_TRAILING_WHITESPACE)
   if(Result EQUAL 0)
-    set(${BranchName} "'${Output}'" PARENT_SCOPE)
+    execute_process(COMMAND "${Git_EXECUTABLE}" diff-index --ignore-submodules --quiet HEAD
+                    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+                    RESULT_VARIABLE Result)
+    if(NOT Result EQUAL 0)
+      set(${CommitName} "${${CommitName}} (dirty)")
+    endif()
   else()
-    set(${BranchName} "unknown" PARENT_SCOPE)
+    set(${CommitName} "unknown")
   endif()
-endfunction()
+endmacro()
 
 
 # This removes the contents between all C++ block comments (i.e. /* ... */) for a C++ file whose

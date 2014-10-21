@@ -40,7 +40,7 @@ endif()
 # ${gtest_BINARY_DIR}.
 # Language "C" is required for find_package(Threads).
 project(gtest CXX C)
-cmake_minimum_required(VERSION 2.8.12.1)
+cmake_minimum_required(VERSION 2.8.12.2 FATAL_ERROR)
 
 if (COMMAND set_up_hermetic_build)
   set_up_hermetic_build()
@@ -84,7 +84,7 @@ target_compile_definitions(gtest
     GTEST_USE_OWN_TUPLE=0
   PUBLIC
     USE_MAIDSAFE_LOG=1
-    $<$<AND:$<BOOL:${UNIX}>,$<CXX_COMPILER_ID:Clang>>:_FILE_OFFSET_BITS=64>
+    $<$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>>:_FILE_OFFSET_BITS=64>
 )
 target_compile_definitions(gtest_no_maidsafe_log
   INTERFACE
@@ -93,7 +93,7 @@ target_compile_definitions(gtest_no_maidsafe_log
     GTEST_USE_OWN_TUPLE=0
   PUBLIC
     USE_MAIDSAFE_LOG=0
-    $<$<AND:$<BOOL:${UNIX}>,$<CXX_COMPILER_ID:Clang>>:_FILE_OFFSET_BITS=64>
+    $<$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>>:_FILE_OFFSET_BITS=64>
 )
 
 # These next 4 commands are a workaround to avoid having to link maidsafe_common via a target_link_libraries call.
@@ -147,25 +147,29 @@ endif()
 # gtest_build_tests option to ON.  You can do it by running ccmake
 # or specifying the -Dgtest_build_tests=ON flag when running cmake.
 
-if (gtest_build_tests)
+if(gtest_build_tests)
   # This must be set in the root directory for the tests to be run by
   # 'make test' or ctest.
   enable_testing()
 
   ############################################################
   # C++ tests built with standard compiler flags.
-
+if(UNIX AND NOT APPLE)
   cxx_test(gtest-death-test_test "gtest_main;gtest_no_maidsafe_log")
   cxx_test(gtest_environment_test gtest)
-  cxx_test(gtest-filepath_test "gtest_main;gtest_no_maidsafe_log")
+  cxx_test(gtest-param-test_test gtest
+    test/gtest-param-test2_test.cc)
+  cxx_test(gtest_repeat_test gtest)
+  cxx_test(gtest_stress_test gtest)
+  cxx_test(gtest_throw_on_failure_ex_test gtest)
+endif()
+  # cxx_test(gtest-filepath_test "gtest_main;gtest_no_maidsafe_log")
   cxx_test(gtest-linked_ptr_test "gtest_main;gtest_no_maidsafe_log")
   cxx_test(gtest-listener_test "gtest_main;gtest_no_maidsafe_log")
   cxx_test(gtest_main_unittest "gtest_main;gtest_no_maidsafe_log")
   cxx_test(gtest-message_test "gtest_main;gtest_no_maidsafe_log")
   cxx_test(gtest_no_test_unittest gtest)
   cxx_test(gtest-options_test "gtest_main;gtest_no_maidsafe_log")
-  cxx_test(gtest-param-test_test gtest
-    test/gtest-param-test2_test.cc)
   cxx_test(gtest-port_test "gtest_main;gtest_no_maidsafe_log")
   target_compile_definitions(gtest-port_test PRIVATE $<$<BOOL:${UNIX}>:GTEST_HAS_POSIX_REGTEST_HAS_POSIX_RE>)
   target_compile_options(gtest-port_test PRIVATE $<$<BOOL:${MSVC}>:/J>)
@@ -173,11 +177,8 @@ if (gtest_build_tests)
   # cxx_test(gtest-printers_test "gtest_main;gtest_no_maidsafe_log")
   cxx_test(gtest_prod_test "gtest_main;gtest_no_maidsafe_log"
     test/production.cc)
-  cxx_test(gtest_repeat_test gtest)
   # cxx_test(gtest_sole_header_test "gtest_main;gtest_no_maidsafe_log")
-  cxx_test(gtest_stress_test gtest)
   cxx_test(gtest-test-part_test "gtest_main;gtest_no_maidsafe_log")
-  cxx_test(gtest_throw_on_failure_ex_test gtest)
   cxx_test(gtest-typed-test_test "gtest_main;gtest_no_maidsafe_log"
     test/gtest-typed-test2_test.cc)
   # cxx_test(gtest_unittest "gtest_main;gtest_no_maidsafe_log")
