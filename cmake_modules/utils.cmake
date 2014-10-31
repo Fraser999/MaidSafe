@@ -312,7 +312,7 @@ function(ms_add_style_test)
   endforeach()
   set(ThisTestName ${CamelCaseProjectName}StyleCheck)
   add_test(${ThisTestName} python ${maidsafe_SOURCE_DIR}/tools/cpplint.py ${AllFiles})
-  set_property(TEST ${ThisTestName} PROPERTY LABELS ${CamelCaseProjectName} CodingStyle)
+  set_property(TEST ${ThisTestName} PROPERTY LABELS ${CamelCaseProjectName} CodingStyle ${TASK_LABEL})
 endfunction()
 
 
@@ -360,7 +360,7 @@ function(ms_add_test_for_multiple_definition_errors)
 
   set(ThisTestName ${CamelCaseProjectName}MultipleDefinitionsCheck)
   add_test(NAME ${ThisTestName} COMMAND ${ExeName})
-  set_property(TEST ${ThisTestName} PROPERTY LABELS ${CamelCaseProjectName} MultipleDefinitions)
+  set_property(TEST ${ThisTestName} PROPERTY LABELS ${CamelCaseProjectName} MultipleDefinitions ${TASK_LABEL})
 endfunction()
 
 
