@@ -265,6 +265,10 @@ public:
 	AlgorithmParametersBase(const char *name, bool throwIfNotUsed)
 		: m_name(name), m_throwIfNotUsed(throwIfNotUsed), m_used(false) {}
 
+#ifdef _MSC_VER
+# pragma warning(push)
+# pragma warning(disable : 4297)  // function assumed not to throw an exception but does
+#endif
 	virtual ~AlgorithmParametersBase()
 	{
 #ifdef CRYPTOPP_UNCAUGHT_EXCEPTION_AVAILABLE
@@ -282,6 +286,9 @@ public:
 		}
 #endif
 	}
+#ifdef _MSC_VER
+# pragma warning(pop)
+#endif
 
 	bool GetVoidValue(const char *name, const std::type_info &valueType, void *pValue) const;
 	

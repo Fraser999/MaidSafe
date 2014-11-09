@@ -638,12 +638,14 @@ TEST(MatcherCastTest, ConversionConstructorIsUsed) {
   EXPECT_FALSE(m.Matches(ConvertibleFromAny(2)));
 }
 
+#ifndef _MSC_VER
 TEST(MatcherCastTest, FromConvertibleFromAny) {
   Matcher<ConvertibleFromAny> m =
       MatcherCast<ConvertibleFromAny>(Eq(ConvertibleFromAny(1)));
   EXPECT_TRUE(m.Matches(ConvertibleFromAny(1)));
   EXPECT_FALSE(m.Matches(ConvertibleFromAny(2)));
 }
+#endif
 
 class Base {};
 class Derived : public Base {};
@@ -726,12 +728,14 @@ TEST(SafeMatcherCastTest, ConversionConstructorIsUsed) {
   EXPECT_FALSE(m.Matches(ConvertibleFromAny(2)));
 }
 
+#ifndef _MSC_VER
 TEST(SafeMatcherCastTest, FromConvertibleFromAny) {
   Matcher<ConvertibleFromAny> m =
       SafeMatcherCast<ConvertibleFromAny>(Eq(ConvertibleFromAny(1)));
   EXPECT_TRUE(m.Matches(ConvertibleFromAny(1)));
   EXPECT_FALSE(m.Matches(ConvertibleFromAny(2)));
 }
+#endif
 
 // Tests that A<T>() matches any value of type T.
 TEST(ATest, MatchesAnyValue) {

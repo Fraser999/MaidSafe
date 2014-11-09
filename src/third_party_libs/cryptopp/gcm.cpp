@@ -224,11 +224,11 @@ void GCM_Base::SetKeyWithoutResync(const byte *userKey, size_t keylength, const 
 			s_reductionTable[0] = 0;
 			word16 x = 0x01c2;
 			s_reductionTable[1] = ByteReverse(x);
-			for (int i=2; i<=0x80; i*=2)
+			for (i=2; i<=0x80; i*=2)
 			{
 				x <<= 1;
 				s_reductionTable[i] = ByteReverse(x);
-				for (int j=1; j<i; j++)
+				for (j=1; j<i; j++)
 					s_reductionTable[i+j] = s_reductionTable[i] ^ s_reductionTable[j];
 			}
 			s_reductionTableInitialized = true;

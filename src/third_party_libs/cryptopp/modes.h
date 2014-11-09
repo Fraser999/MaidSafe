@@ -84,9 +84,9 @@ class CRYPTOPP_NO_VTABLE ModePolicyCommonTemplate : public CipherModeBase, publi
 };
 
 template <class POLICY_INTERFACE>
-void ModePolicyCommonTemplate<POLICY_INTERFACE>::CipherSetKey(const NameValuePairs &params, const byte *key, size_t length)
+void ModePolicyCommonTemplate<POLICY_INTERFACE>::CipherSetKey(const NameValuePairs &params, const byte *the_key, size_t length)
 {
-	m_cipher->SetKey(key, length, params);
+  m_cipher->SetKey(the_key, length, params);
 	ResizeBuffers();
 	int feedbackSize = params.GetIntValueWithDefault(Name::FeedbackSize(), 0);
 	SetFeedbackSize(feedbackSize);

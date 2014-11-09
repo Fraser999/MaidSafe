@@ -17,7 +17,7 @@
 #else
 #define _CRT_DEBUGGER_HOOK __crt_debugger_hook
 #endif
-extern "C" {_CRTIMP void __cdecl _CRT_DEBUGGER_HOOK(int);}
+extern "C" {void __cdecl _CRT_DEBUGGER_HOOK(int);}
 #endif
 #endif
 

@@ -131,7 +131,7 @@ int CRYPTOPP_API main(int argc, char *argv[])
 
 		if (command == "g")
 		{
-			char seed[1024], privFilename[128], pubFilename[128];
+			char the_seed[1024], privFilename[128], pubFilename[128];
 			unsigned int keyLength;
 
 			cout << "Key length in bits: ";
@@ -145,9 +145,9 @@ int CRYPTOPP_API main(int argc, char *argv[])
 
 			cout << "\nRandom Seed: ";
 			ws(cin);
-			cin.getline(seed, 1024);
+      cin.getline(the_seed, 1024);
 
-			GenerateRSAKey(keyLength, privFilename, pubFilename, seed);
+      GenerateRSAKey(keyLength, privFilename, pubFilename, the_seed);
 		}
 		else if (command == "rs")
 			RSASignFile(argv[2], argv[3], argv[4]);
@@ -159,7 +159,7 @@ int CRYPTOPP_API main(int argc, char *argv[])
 		else if (command == "r")
 		{
 			char privFilename[128], pubFilename[128];
-			char seed[1024], message[1024];
+      char the_seed[1024], message[1024];
 
 			cout << "Private key file: ";
 			cin >> privFilename;
@@ -169,12 +169,12 @@ int CRYPTOPP_API main(int argc, char *argv[])
 
 			cout << "\nRandom Seed: ";
 			ws(cin);
-			cin.getline(seed, 1024);
+      cin.getline(the_seed, 1024);
 
 			cout << "\nMessage: ";
 			cin.getline(message, 1024);
 
-			string ciphertext = RSAEncryptString(pubFilename, seed, message);
+      string ciphertext = RSAEncryptString(pubFilename, the_seed, message);
 			cout << "\nCiphertext: " << ciphertext << endl;
 
 			string decrypted = RSADecryptString(privFilename, ciphertext.c_str());
@@ -293,11 +293,11 @@ int CRYPTOPP_API main(int argc, char *argv[])
 		}
 		else if (command == "ss")
 		{
-			char seed[1024];
+      char the_seed[1024];
 			cout << "\nRandom Seed: ";
 			ws(cin);
-			cin.getline(seed, 1024);
-			SecretShareFile(atoi(argv[2]), atoi(argv[3]), argv[4], seed);
+      cin.getline(the_seed, 1024);
+      SecretShareFile(atoi(argv[2]), atoi(argv[3]), argv[4], the_seed);
 		}
 		else if (command == "sr")
 			SecretRecoverFile(argc-3, argv[2], argv+3);

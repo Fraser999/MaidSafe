@@ -649,20 +649,20 @@ bool ValidateCipherModes()
 		cout << (fail ? "FAILED   " : "passed   ") << "CBC decryption with one-and-zeros padding" << endl;
 	}
 	{
-		const byte plain[] = {'a', 0, 0, 0, 0, 0, 0, 0};
+		const byte plain_text[] = {'a', 0, 0, 0, 0, 0, 0, 0};
 		// generated with Crypto++
 		const byte encrypted[] = {
 			0x9B, 0x47, 0x57, 0x59, 0xD6, 0x9C, 0xF6, 0xD0};
 
 		CBC_Mode_ExternalCipher::Encryption modeE(desE, iv);
 		fail = !TestFilter(StreamTransformationFilter(modeE, NULL, StreamTransformationFilter::ZEROS_PADDING).Ref(),
-			plain, 1, encrypted, sizeof(encrypted));
+      plain_text, 1, encrypted, sizeof(encrypted));
 		pass = pass && !fail;
 		cout << (fail ? "FAILED   " : "passed   ") << "CBC encryption with zeros padding" << endl;
 
 		CBC_Mode_ExternalCipher::Decryption modeD(desD, iv);
 		fail = !TestFilter(StreamTransformationFilter(modeD, NULL, StreamTransformationFilter::ZEROS_PADDING).Ref(),
-			encrypted, sizeof(encrypted), plain, sizeof(plain));
+      encrypted, sizeof(encrypted), plain_text, sizeof(plain_text));
 		pass = pass && !fail;
 		cout << (fail ? "FAILED   " : "passed   ") << "CBC decryption with zeros padding" << endl;
 	}
@@ -734,20 +734,20 @@ bool ValidateCipherModes()
 		cout << (fail ? "FAILED   " : "passed   ") << "CFB mode IV generation" << endl;
 	}
 	{
-		const byte plain[] = {	// "Now is the." without tailing 0
+    const byte plain_text[] = {	// "Now is the." without tailing 0
 			0x4e,0x6f,0x77,0x20,0x69,0x73,0x20,0x74,0x68,0x65};
 		const byte encrypted[] = {	// from FIPS 81
 			0xf3,0x1f,0xda,0x07,0x01,0x14,0x62,0xee,0x18,0x7f};
 
 		CFB_Mode_ExternalCipher::Encryption modeE(desE, iv, 1);
 		fail = !TestFilter(StreamTransformationFilter(modeE).Ref(),
-			plain, sizeof(plain), encrypted, sizeof(encrypted));
+      plain_text, sizeof(plain_text), encrypted, sizeof(encrypted));
 		pass = pass && !fail;
 		cout << (fail ? "FAILED   " : "passed   ") << "CFB (8-bit feedback) encryption" << endl;
 
 		CFB_Mode_ExternalCipher::Decryption modeD(desE, iv, 1);
 		fail = !TestFilter(StreamTransformationFilter(modeD).Ref(),
-			encrypted, sizeof(encrypted), plain, sizeof(plain));
+      encrypted, sizeof(encrypted), plain_text, sizeof(plain_text));
 		pass = pass && !fail;
 		cout << (fail ? "FAILED   " : "passed   ") << "CFB (8-bit feedback) decryption" << endl;
 
@@ -800,7 +800,7 @@ bool ValidateCipherModes()
 		cout << (fail ? "FAILED   " : "passed   ") << "Counter Mode IV generation" << endl;
 	}
 	{
-		const byte plain[] = {	// "7654321 Now is the time for "
+    const byte plain_text[] = {	// "7654321 Now is the time for "
 			0x37, 0x36, 0x35, 0x34, 0x33, 0x32, 0x31, 0x20, 
 			0x4e, 0x6f, 0x77, 0x20, 0x69, 0x73, 0x20, 0x74, 
 			0x68, 0x65, 0x20, 0x74, 0x69, 0x6d, 0x65, 0x20, 
@@ -812,13 +812,13 @@ bool ValidateCipherModes()
 
 		CBC_MAC<DES> cbcmac(key);
 		HashFilter cbcmacFilter(cbcmac);
-		fail = !TestFilter(cbcmacFilter, plain, sizeof(plain), mac1, sizeof(mac1));
+    fail = !TestFilter(cbcmacFilter, plain_text, sizeof(plain_text), mac1, sizeof(mac1));
 		pass = pass && !fail;
 		cout << (fail ? "FAILED   " : "passed   ") << "CBC MAC" << endl;
 
 		DMAC<DES> dmac(key);
 		HashFilter dmacFilter(dmac);
-		fail = !TestFilter(dmacFilter, plain, sizeof(plain), mac2, sizeof(mac2));
+    fail = !TestFilter(dmacFilter, plain_text, sizeof(plain_text), mac2, sizeof(mac2));
 		pass = pass && !fail;
 		cout << (fail ? "FAILED   " : "passed   ") << "DMAC" << endl;
 	}
