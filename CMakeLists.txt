@@ -52,7 +52,20 @@ if(CMAKE_BINARY_DIR STREQUAL CMAKE_SOURCE_DIR OR
 endif()
 
 
+# Setup android build if required
+if(ANDROID_BUILD)
+  include("${CMAKE_SOURCE_DIR}/cmake_modules/android_setup.cmake")
+endif()
+
+
 project(maidsafe)
+
+
+if(ANDROID_BUILD)
+  ms_android_setup_flags()
+endif()
+
+
 if(CMAKE_CONFIGURATION_TYPES)
   set(CMAKE_CONFIGURATION_TYPES ${CMAKE_CONFIGURATION_TYPES} ReleaseNoInline CACHE INTERNAL "" FORCE)
 else()
@@ -77,6 +90,7 @@ set(MaidsafeGeneratedSourcesDir ${CMAKE_BINARY_DIR}/GeneratedSources)
 set(SubModules
       common
       passport
+      crux
       rudp
       routing
       encrypt
@@ -84,7 +98,8 @@ set(SubModules
       vault
       vault_manager
       drive
-      api)
+      api
+      launcher)
 # Set all submodules' source dir before calling add_subdirectory to avoid
 # having to run CMake twice in a clean build tree.
 foreach(SubModule ${SubModules})

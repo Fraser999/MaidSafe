@@ -85,6 +85,9 @@ endif()
 if(CMAKE_CL_64)
   set(BoostSourceDir "${BoostSourceDir}_Win64")
 endif()
+if(${ANDROID_BUILD})
+  set(BoostSourceDir "${BoostFolderName}_Android_v${AndroidApiLevel}_${CMAKE_CXX_COMPILER_ID}_${CMAKE_CXX_COMPILER_VERSION}")
+endif()
 string(REPLACE "." "_" BoostSourceDir ${BoostSourceDir})
 set(BoostSourceDir "${BoostCacheDir}/${BoostSourceDir}")
 
@@ -171,6 +174,12 @@ if(NOT b2Path)
 endif()
 execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory ${BoostSourceDir}/Build)
 
+# Apply patched files
+if(NOT BoostVersion STREQUAL "1.57.0")
+  message(FATAL_ERROR "Remove patched files from the source tree and delete corresponding 'configure_file' commands in this 'add_boost' CMake file.")
+endif()
+configure_file(patches/boost_1_57/boost/thread/pthread/thread_data.hpp ${BoostSourceDir}/boost/thread/pthread/thread_data.hpp COPYONLY)
+
 # Expose BoostSourceDir to parent scope
 set(BoostSourceDir ${BoostSourceDir} PARENT_SCOPE)
 
@@ -212,16 +221,22 @@ elseif(APPLE)
   list(APPEND b2Args variant=release toolset=clang cxxflags=-fPIC cxxflags=-std=c++11 cxxflags=-stdlib=libc++
                      linkflags=-stdlib=libc++ architecture=combined address-model=32_64 --layout=tagged)
 elseif(UNIX)
-  list(APPEND b2Args variant=release cxxflags=-fPIC cxxflags=-std=c++11 -sNO_BZIP2=1 --layout=tagged)
-  # Need to configure the toolset based on whatever version CMAKE_CXX_COMPILER is
-  string(REGEX MATCH "[0-9]+\\.[0-9]+\\.[0-9]+" ToolsetVer "${CMAKE_CXX_COMPILER_VERSION}")
-  if(CMAKE_CXX_COMPILER_ID MATCHES "^(Apple)?Clang$")
-    list(APPEND b2Args toolset=clang-${ToolsetVer})
-    if(HAVE_LIBC++)
-      list(APPEND b2Args cxxflags=-stdlib=libc++ linkflags=-stdlib=libc++)
+  list(APPEND b2Args --layout=tagged -sNO_BZIP2=1)
+  if(ANDROID_BUILD)
+    configure_file("${CMAKE_SOURCE_DIR}/tools/android/user-config.jam.in" "${BoostSourceDir}/tools/build/src/user-config.jam")
+    list(APPEND b2Args toolset=gcc-android target-os=linux)
+  else()
+    list(APPEND b2Args variant=release cxxflags=-fPIC cxxflags=-std=c++11)
+    # Need to configure the toolset based on whatever version CMAKE_CXX_COMPILER is
+    string(REGEX MATCH "[0-9]+\\.[0-9]+\\.[0-9]+" ToolsetVer "${CMAKE_CXX_COMPILER_VERSION}")
+    if(CMAKE_CXX_COMPILER_ID MATCHES "^(Apple)?Clang$")
+      list(APPEND b2Args toolset=clang-${ToolsetVer})
+      if(HAVE_LIBC++)
+        list(APPEND b2Args cxxflags=-stdlib=libc++ linkflags=-stdlib=libc++)
+      endif()
+    elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+      list(APPEND b2Args toolset=gcc-${ToolsetVer})
     endif()
-  elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-    list(APPEND b2Args toolset=gcc-${ToolsetVer})
   endif()
 endif()
 
@@ -246,6 +261,11 @@ foreach(Component ${BoostComponents})
       )
   ms_underscores_to_camel_case(${Component} CamelCaseComponent)
   add_library(Boost${CamelCaseComponent} STATIC IMPORTED GLOBAL)
+  if(Component STREQUAL "test")
+    set(ComponentLibName unit_test_framework)
+  else()
+    set(ComponentLibName ${Component})
+  endif()
   if(MSVC)
     if(MSVC11)
       set(CompilerName vc110)
@@ -256,15 +276,15 @@ foreach(Component ${BoostComponents})
     endif()
     string(REGEX MATCH "[0-9]_[0-9][0-9]" Version "${BoostFolderName}")
     set_target_properties(Boost${CamelCaseComponent} PROPERTIES
-                          IMPORTED_LOCATION_DEBUG ${BoostSourceDir}/stage/lib/libboost_${Component}-${CompilerName}-mt-gd-${Version}.lib
-                          IMPORTED_LOCATION_MINSIZEREL ${BoostSourceDir}/stage/lib/libboost_${Component}-${CompilerName}-mt-${Version}.lib
-                          IMPORTED_LOCATION_RELEASE ${BoostSourceDir}/stage/lib/libboost_${Component}-${CompilerName}-mt-${Version}.lib
-                          IMPORTED_LOCATION_RELWITHDEBINFO ${BoostSourceDir}/stage/lib/libboost_${Component}-${CompilerName}-mt-${Version}.lib
-                          IMPORTED_LOCATION_RELEASENOINLINE ${BoostSourceDir}/stage/lib/libboost_${Component}-${CompilerName}-mt-${Version}.lib
+                          IMPORTED_LOCATION_DEBUG ${BoostSourceDir}/stage/lib/libboost_${ComponentLibName}-${CompilerName}-mt-gd-${Version}.lib
+                          IMPORTED_LOCATION_MINSIZEREL ${BoostSourceDir}/stage/lib/libboost_${ComponentLibName}-${CompilerName}-mt-${Version}.lib
+                          IMPORTED_LOCATION_RELEASE ${BoostSourceDir}/stage/lib/libboost_${ComponentLibName}-${CompilerName}-mt-${Version}.lib
+                          IMPORTED_LOCATION_RELWITHDEBINFO ${BoostSourceDir}/stage/lib/libboost_${ComponentLibName}-${CompilerName}-mt-${Version}.lib
+                          IMPORTED_LOCATION_RELEASENOINLINE ${BoostSourceDir}/stage/lib/libboost_${ComponentLibName}-${CompilerName}-mt-${Version}.lib
                           LINKER_LANGUAGE CXX)
   else()
     set_target_properties(Boost${CamelCaseComponent} PROPERTIES
-                          IMPORTED_LOCATION ${BoostSourceDir}/stage/lib/libboost_${Component}-mt.a
+                          IMPORTED_LOCATION ${BoostSourceDir}/stage/lib/libboost_${ComponentLibName}-mt.a
                           LINKER_LANGUAGE CXX)
   endif()
   set_target_properties(boost_${Component} Boost${CamelCaseComponent} PROPERTIES
@@ -287,7 +307,7 @@ foreach(Component ${BoostComponents})
           message(FATAL_ERROR "${Msg}")
         endif()
         set(Boost${CamelCaseComponent}Libs Boost${CamelCaseComponent} ${IconvLib})
-      else()
+      elseif(NOT ANDROID_BUILD)
         find_library(Icui18nLib libicui18n.a)
         find_library(IcuucLib libicuuc.a)
         find_library(IcudataLib libicudata.a)
