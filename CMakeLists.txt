@@ -91,15 +91,14 @@ set(SubModules
       common
       passport
       crux
-      rudp
       routing
-      encrypt
-      nfs
-      vault
-      vault_manager
-      drive
-      api
-      launcher)
+      #encrypt
+      #nfs
+      vault)
+      #vault_manager
+      #drive
+      #api
+      #launcher)
 # Set all submodules' source dir before calling add_subdirectory to avoid
 # having to run CMake twice in a clean build tree.
 foreach(SubModule ${SubModules})
