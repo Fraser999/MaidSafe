@@ -87,17 +87,17 @@ set(BoostDownloadFolder ${BoostCacheDir}/${BoostDownloadFolder})
 # Download boost if required
 if(NOT EXISTS "${BoostCacheDir}/${BoostFolderName}.tar.bz2")
   message(STATUS "Downloading boost ${BoostVersion} to ${BoostCacheDir}")
+  file(DOWNLOAD http://sourceforge.net/projects/boost/files/boost/${BoostVersion}/${BoostFolderName}.tar.bz2/download
+       ${BoostCacheDir}/${BoostFolderName}.tar.bz2
+       STATUS Status
+       SHOW_PROGRESS
+       EXPECTED_HASH SHA1=${BoostSHA1}
+       )
 endif()
-file(DOWNLOAD http://sourceforge.net/projects/boost/files/boost/${BoostVersion}/${BoostFolderName}.tar.bz2/download
-     ${BoostCacheDir}/${BoostFolderName}.tar.bz2
-     STATUS Status
-     SHOW_PROGRESS
-     EXPECTED_HASH SHA1=${BoostSHA1}
-     )
 
 # Extract boost if required
 string(FIND "${Status}" "returning early" Found)
-if(Found LESS 0 OR NOT IS_DIRECTORY "${BoostDownloadFolder}")
+if(NOT IS_DIRECTORY "${BoostDownloadFolder}")
   message(STATUS "Extracting boost ${BoostVersion} to ${BoostDownloadFolder}")
   file(MAKE_DIRECTORY "${BoostDownloadFolder}")
   execute_process(COMMAND ${CMAKE_COMMAND} -E tar xfz ${BoostCacheDir}/${BoostFolderName}.tar.bz2
@@ -153,6 +153,8 @@ if(MSVC)
     list(APPEND b2Args toolset=msvc-11.0)
   elseif(MSVC12)
     list(APPEND b2Args toolset=msvc-12.0)
+  elseif(MSVC14)
+    list(APPEND b2Args toolset=msvc)
   endif()
   list(APPEND b2Args
               define=_BIND_TO_CURRENT_MFC_VERSION=1
@@ -202,6 +204,8 @@ foreach(Component ${BoostComponents})
       set(CompilerName vc110)
     elseif(MSVC12)
       set(CompilerName vc120)
+    elseif(MSVC14)
+      set(CompilerName vc)
     endif()
     string(REGEX MATCH "[0-9]_[0-9][0-9]" Version "${BoostFolderName}")
     set_target_properties(Boost${CamelCaseComponent} PROPERTIES

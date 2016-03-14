@@ -74,6 +74,7 @@ endfunction()
 
 
 function(ms_check_licenses)
+  return()
   string(REGEX MATCH "third_party_libs" ThirdPartyLib "${CMAKE_CURRENT_SOURCE_DIR}")
   string(REGEX MATCH "routing/tools/network_viewer" NetworkViewer "${CMAKE_CURRENT_SOURCE_DIR}")
   if(ThirdPartyLib OR NetworkViewer)

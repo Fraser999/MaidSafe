@@ -32,8 +32,10 @@
 #                                                                                                  #
 #==================================================================================================#
 
+return()
+
 # Required Qt version
-set(Qt5RequiredVersion 5.2.0)
+set(Qt5RequiredVersion 5.5.0)
 
 # Check for valid input variables
 list(LENGTH Qt5RequiredLibs Qt5RequiredLibsLength)
